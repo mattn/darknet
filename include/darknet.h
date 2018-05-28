@@ -4,6 +4,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
+#include <time.h>
+#ifdef _WIN32
+#include <ws2tcpip.h>
+#endif
 
 #define SECRET_NUM -1234
 extern int gpu_index;
@@ -31,6 +35,19 @@ extern int gpu_index;
     #endif
     #endif
 #endif
+
+#if defined(_WIN32) && !defined(timersub)
+#define timersub(a, b, result) \
+    do { \
+    (result)->tv_sec = (a)->tv_sec - (b)->tv_sec; \
+    (result)->tv_usec = (a)->tv_usec - (b)->tv_usec; \
+    if ((result)->tv_usec < 0) { \
+      --(result)->tv_sec; \
+      (result)->tv_usec += 1000000; \
+    } \
+    } while (0)
+#endif
+
 
 typedef struct{
     int classes;
