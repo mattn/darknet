@@ -783,6 +783,7 @@ int print_game(float *board, FILE *fp)
 
 int stdin_ready()
 {
+#ifndef _WIN32
     fd_set readfds;
     FD_ZERO(&readfds);
 
@@ -795,6 +796,9 @@ int stdin_ready()
         return 1;
     }
     return 0;
+#else
+    return 1;
+#endif
 }
 
 mcts_tree *ponder(mcts_tree *tree, network *net, float *b, float *ko, int player, float cpuct)

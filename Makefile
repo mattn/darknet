@@ -43,7 +43,9 @@ ifeq ($(OPENCV), 1)
 COMMON+= -DOPENCV
 CFLAGS+= -DOPENCV
 LDFLAGS+= `pkg-config --libs opencv` -lstdc++
-COMMON+= `pkg-config --cflags opencv` 
+COMMON+= `pkg-config --cflags opencv`
+#LDFLAGS+= `pkg-config --libs opencv4` -lstdc++
+#COMMON+= `pkg-config --cflags opencv4`
 endif
 
 ifeq ($(GPU), 1) 

@@ -9,6 +9,7 @@ using namespace cv;
 
 extern "C" {
 
+#if CV_VERSION_MAJOR < 4
 IplImage *image_to_ipl(image im)
 {
     int x,y,c;
@@ -65,6 +66,48 @@ image mat_to_image(Mat m)
     rgbgr_image(im);
     return im;
 }
+#else
+image mat_to_image(Mat mat)
+{
+    int w = mat.cols;
+    int h = mat.rows;
+    int c = mat.channels();
+    image im = make_image(w, h, c);
+    unsigned char *data = (unsigned char *)mat.data;
+    int step = mat.step;
+    for (int y = 0; y < h; ++y) {
+        for (int k = 0; k < c; ++k) {
+            for (int x = 0; x < w; ++x) {
+                //uint8_t val = mat.ptr<uint8_t>(y)[c * x + k];
+                //uint8_t val = mat.at<Vec3b>(y, x).val[k];
+                //im.data[k*w*h + y*w + x] = val / 255.0f;
+
+                im.data[k*w*h + y*w + x] = data[y*step + x*c + k] / 255.0f;
+            }
+        }
+    }
+    return im;
+}
+
+Mat image_to_mat(image img)
+{
+    int channels = img.c;
+    int width = img.w;
+    int height = img.h;
+    cv::Mat mat = cv::Mat(height, width, CV_8UC(channels));
+    int step = mat.step;
+
+    for (int y = 0; y < img.h; ++y) {
+        for (int x = 0; x < img.w; ++x) {
+            for (int c = 0; c < img.c; ++c) {
+                float val = img.data[c*img.h*img.w + y*img.w + x];
+                mat.data[y*step + x*img.c + c] = (unsigned char)(val * 255);
+            }
+        }
+    }
+    return mat;
+}
+#endif
 
 void *open_video_stream(const char *f, int c, int w, int h, int fps)
 {
@@ -72,9 +115,15 @@ void *open_video_stream(const char *f, int c, int w, int h, int fps)
     if(f) cap = new VideoCapture(f);
     else cap = new VideoCapture(c);
     if(!cap->isOpened()) return 0;
+#if CV_VERSION_MAJOR < 4
     if(w) cap->set(CV_CAP_PROP_FRAME_WIDTH, w);
     if(h) cap->set(CV_CAP_PROP_FRAME_HEIGHT, w);
     if(fps) cap->set(CV_CAP_PROP_FPS, w);
+#else
+    if(w) cap->set(cv::CAP_PROP_FRAME_WIDTH, w);
+    if(h) cap->set(cv::CAP_PROP_FRAME_HEIGHT, w);
+    if(fps) cap->set(cv::CAP_PROP_FPS, w);
+#endif
     return (void *) cap;
 }
 
@@ -123,7 +172,11 @@ void make_window(char *name, int w, int h, int fullscreen)
 {
     namedWindow(name, WINDOW_NORMAL); 
     if (fullscreen) {
+#if CV_VERSION_MAJOR < 4
         setWindowProperty(name, CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
+#else
+        setWindowProperty(name, cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN);
+#endif
     } else {
         resizeWindow(name, w, h);
         if(strcmp(name, "Demo") == 0) moveWindow(name, 0, 0);
